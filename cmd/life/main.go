@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/kayotklimenko/game-of-life-go/pkg/life"
+	"github.com/klimenkokayot/game-of-life-go/pkg/life"
 )
 
 func main() {

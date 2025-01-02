@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"math/rand"
 
-	"github.com/kayotklimenko/game-of-life-go/pkg/support"
+	"github.com/klimenkokayot/game-of-life-go/pkg/support"
 )
 
 type World struct {
