@@ -8,28 +8,53 @@ import (
 )
 
 type World struct {
-	Height uint
-	Width  uint
+	Height int
+	Width  int
 	Cells  [][]bool
 }
 
 // Определяет количество живых соседей у клетки
-func (w *World) Neighbours(x, y int) int {
+func (w *World) Neighbours(x, y int) (int, error) {
 	cnt := 0
-	cnt += support.B2I(w.Cells[x-1][y])
-	cnt += support.B2I(w.Cells[x-1][y+1])
-	cnt += support.B2I(w.Cells[x][y+1])
-	cnt += support.B2I(w.Cells[x+1][y+1])
-	cnt += support.B2I(w.Cells[x+1][y])
-	cnt += support.B2I(w.Cells[x+1][y-1])
-	cnt += support.B2I(w.Cells[x][y-1])
-	cnt += support.B2I(w.Cells[x-1][y-1])
-	return cnt
+	if err := w.CheckPosition(x, y); err != nil {
+		return 0, err
+	}
+
+	if x != 0 {
+		cnt += support.B2I(w.Cells[x-1][y])
+		if y != 0 {
+			cnt += support.B2I(w.Cells[x-1][y-1])
+		}
+		if y != w.Width-1 {
+			cnt += support.B2I(w.Cells[x-1][y+1])
+		}
+	}
+	if x != w.Height-1 {
+		cnt += support.B2I(w.Cells[x+1][y])
+		if y != 0 {
+			cnt += support.B2I(w.Cells[x+1][y-1])
+		}
+		if y != w.Width-1 {
+			cnt += support.B2I(w.Cells[x+1][y+1])
+		}
+	}
+	if y != 0 {
+		cnt += support.B2I(w.Cells[x][y-1])
+	}
+	if y != w.Width-1 {
+		cnt += support.B2I(w.Cells[x][y+1])
+	}
+
+	return cnt, nil
 }
 
 // Определяет состояние клетки в следующем состоянии
-func (w *World) Next(x, y int) bool {
-	n := w.Neighbours(x, y)
+func (w *World) Next(x, y int) (bool, error) {
+	n, err := w.Neighbours(x, y)
+	if err != nil {
+		return false, err
+	}
+
 	alive := w.Cells[x][y]
 	if alive && (n > 4 || n < 2) {
 		alive = false
@@ -37,22 +62,46 @@ func (w *World) Next(x, y int) bool {
 	if !alive && n == 3 {
 		alive = true
 	}
-	return alive
+	return alive, nil
 }
 
-// Обновляет состояние мира на следующий этап
+/*
+ * Обновляет состояние мира на следующий этап
+ * noexcept
+ */
 func (w *World) NextState() {
-	for i := 1; i < int(w.Height)-1; i++ {
-		for j := 1; j < int(w.Width)-1; j++ {
-			w.Cells[i][j] = w.Next(i, j)
+	for i := 0; i < w.Height; i++ {
+		for j := 0; j < w.Width; j++ {
+			w.Cells[i][j], _ = w.Next(i, j)
 		}
 	}
 }
 
-// Создает новый рандомный мир
+// Меняет состояние клетки на True
+func (w *World) SetTrue(x, y int) error {
+	if err := w.CheckPosition(x, y); err != nil {
+		return nil
+	}
+	w.Cells[x][y] = true
+	return nil
+}
+
+// Меняет состояние клетки на False
+func (w *World) SetFalse(x, y int) error {
+	if err := w.CheckPosition(x, y); err != nil {
+		return nil
+	}
+	w.Cells[x][y] = false
+	return nil
+}
+
+/*
+ * Создает новый рандомный мир
+ * noexcept
+ */
 func (w *World) Seed() {
-	for i := 1; i < int(w.Height)-1; i++ {
-		for j := 1; j < int(w.Width)-1; j++ {
+	for i := 0; i < w.Height; i++ {
+		for j := 0; j < w.Width; j++ {
 			w.Cells[i][j] = false
 			if rand.Intn(10) == 0 {
 				w.Cells[i][j] = true
@@ -65,10 +114,10 @@ func (w *World) Seed() {
  * Функция создания мира с размерами высота и ширина
  * Индексация поля с 1
  */
-func NewWorld(height, width uint) *World {
-	cells := make([][]bool, height+2)
+func NewWorld(height, width int) *World {
+	cells := make([][]bool, height)
 	for i := range cells {
-		cells[i] = make([]bool, width+2)
+		cells[i] = make([]bool, width)
 	}
 	return &World{
 		Height: height,
@@ -77,21 +126,41 @@ func NewWorld(height, width uint) *World {
 	}
 }
 
-////////////////////////////////////////////////
+/*
+ * Функции для вывода в консоль, дебага и всякой хрени
+ *
+ */
 
-func (w *World) Print() {
-	brownSquare := "\xF0\x9F\x9F\xAB"
-	greenSquare := "\xF0\x9F\x9F\xA9"
-	for i := 1; i < int(w.Height)-1; i++ {
-		for j := 1; j < int(w.Width)-1; j++ {
+var (
+	trueSquare  = "\xF0\x9F\x9F\xAB"
+	falseSquare = "\xF0\x9F\x9F\xA9"
+)
+
+// Конвертирует состояние игры в строковый формат
+func (w *World) String() string {
+	result := ""
+	for i := 0; i < w.Height; i++ {
+		for j := 0; j < w.Width; j++ {
 			if w.Cells[i][j] {
-				fmt.Print(greenSquare)
+				result += trueSquare
 			} else {
-				fmt.Print(brownSquare)
+				result += falseSquare
 			}
 		}
-		if i+1 != int(w.Height) {
-			fmt.Printf("\n")
+		if i+1 != w.Height {
+			result += "\n"
 		}
 	}
+	return result
+}
+
+// Валидация координатов точки (норм или выходит за поле)
+func (w *World) CheckPosition(x, y int) error {
+	if x < 0 || x >= w.Width {
+		return fmt.Errorf("x must be: %d <= x < %d", 0, w.Width)
+	}
+	if y < 0 || y >= w.Height {
+		return fmt.Errorf("y must be: %d <= y < %d", 0, w.Height)
+	}
+	return nil
 }

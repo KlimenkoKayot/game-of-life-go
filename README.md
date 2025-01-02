@@ -1,4 +1,4 @@
-```cpp
+```go
 - game
 	- cmd // Для хранения пакетов main
 		-life

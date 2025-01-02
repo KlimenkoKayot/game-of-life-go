@@ -1,5 +1,6 @@
 package support
 
+// Конвертирует bool в int
 func B2I(flag bool) int {
 	var i int
 	if flag {
