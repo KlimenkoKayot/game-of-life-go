@@ -96,18 +96,22 @@ func (w *World) SetFalse(x, y int) error {
 }
 
 /*
- * Создает новый рандомный мир
+ * Создает новый рандомный мир с заполнением от 0 до 100
  * noexcept
  */
-func (w *World) Seed() {
+func (w *World) Seed(fill int) error {
+	if fill < 0 || fill > 100 {
+		return fmt.Errorf("fill must be: %d <= fill <= %d", 0, 100)
+	}
 	for i := 0; i < w.Height; i++ {
 		for j := 0; j < w.Width; j++ {
 			w.Cells[i][j] = false
-			if rand.Intn(10) == 0 {
+			if rand.Intn(100+1) <= fill {
 				w.Cells[i][j] = true
 			}
 		}
 	}
+	return nil
 }
 
 /*
@@ -157,7 +161,7 @@ func (w *World) String() string {
 // Валидация координатов точки (норм или выходит за поле)
 func (w *World) CheckPosition(x, y int) error {
 	if x < 0 || x >= w.Width {
-		return fmt.Errorf("x must be: %d <= x < %d", 0, w.Width)
+		return fmt.Errorf("x must be: %d <= y < %d", 0, w.Width)
 	}
 	if y < 0 || y >= w.Height {
 		return fmt.Errorf("y must be: %d <= y < %d", 0, w.Height)
