@@ -2,75 +2,94 @@ package handler
 
 import (
 	"encoding/json"
-	"io"
+	"fmt"
 	"net/http"
+	"path/filepath"
 	"strconv"
+	"sync"
+	"text/template"
 
 	"github.com/klimenkokayot/game-of-life-go/internal/service"
 )
 
 type LifeState struct {
-	*service.LifeService
+	LifeService *service.LifeService
+	Mutex       *sync.Mutex
 }
 
-func (ls *LifeState) View(w http.ResponseWriter, r *http.Request) {
-	str := ls.World.String()
-	w.Write([]byte(str))
-	ls.World.NextState()
+func (ls *LifeState) Index(w http.ResponseWriter, r *http.Request) {
+	tmpl := template.Must(template.ParseFiles(filepath.Join(".", "web", "templates", "index.html")))
+	tmpl.Execute(w, nil)
 }
+
+/////////////////////////////
 
 func (ls *LifeState) Seed(w http.ResponseWriter, r *http.Request) {
-	data := r.FormValue("fill")
-	fill, _ := strconv.Atoi(data)
-	ls.World.Seed(fill)
-}
-
-func (ls *LifeState) SetTrue(w http.ResponseWriter, r *http.Request) {
-	strx := r.FormValue("x")
-	stry := r.FormValue("y")
-	x, _ := strconv.Atoi(strx)
-	y, _ := strconv.Atoi(stry)
-	err := ls.World.SetTrue(x, y)
+	data := r.URL.Query().Get("fill")
+	fill, err := strconv.Atoi(data)
 	if err != nil {
 		w.WriteHeader(http.StatusUnprocessableEntity)
-		io.WriteString(w, err.Error())
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(fmt.Errorf("bad param fill"))
 		return
 	}
-	w.WriteHeader(http.StatusOK)
+
+	ls.Mutex.Lock()
+	ls.LifeService.World.Seed(fill)
+	ls.Mutex.Unlock()
+
+	ls.GetState(w, r)
 }
 
-func (ls *LifeState) SetFalse(w http.ResponseWriter, r *http.Request) {
-	strx := r.FormValue("x")
-	stry := r.FormValue("y")
-	x, _ := strconv.Atoi(strx)
-	y, _ := strconv.Atoi(stry)
-	err := ls.World.SetFalse(x, y)
-	if err != nil {
-		w.WriteHeader(http.StatusUnprocessableEntity)
-		io.WriteString(w, err.Error())
-		return
-	}
-	w.WriteHeader(http.StatusOK)
-}
-
-// Меняет состояние на следующее
+// Меняет состояние на следующее, возвращает новое поле
 func (ls *LifeState) NextState(w http.ResponseWriter, r *http.Request) {
-	ls.World.NextState()
-	w.WriteHeader(http.StatusOK)
+	ls.Mutex.Lock()
+	ls.LifeService.World.NextState()
+	ls.Mutex.Unlock()
+
+	ls.GetState(w, r)
+}
+
+// Инвертирует переменную, возвращает JSON state
+func (ls *LifeState) ToggleCell(w http.ResponseWriter, r *http.Request) {
+	row, err := strconv.Atoi(r.URL.Query().Get("row"))
+	if err != nil {
+		w.WriteHeader(http.StatusUnprocessableEntity)
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(fmt.Errorf("bad param row"))
+		return
+	}
+
+	col, err := strconv.Atoi(r.URL.Query().Get("col"))
+	if err != nil {
+		w.WriteHeader(http.StatusUnprocessableEntity)
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(fmt.Errorf("bad param col"))
+		return
+	}
+
+	ls.Mutex.Lock()
+	err = ls.LifeService.World.InvertCell(row, col)
+	ls.Mutex.Unlock()
+
+	if err != nil {
+		w.WriteHeader(http.StatusUnprocessableEntity)
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(fmt.Errorf("bad param col"))
+		return
+	}
+
+	// После переключения возвращаем JSON state
+	ls.GetState(w, r)
 }
 
 // JSON
 func (ls *LifeState) GetState(w http.ResponseWriter, r *http.Request) {
-	str := ls.World.String()
-	tojson := make(map[string]interface{})
-	tojson["result"] = str
-
-	data, err := json.Marshal(tojson)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
+	ls.Mutex.Lock()
+	data := ls.LifeService.World.Cells
+	ls.Mutex.Unlock()
 
 	w.WriteHeader(http.StatusOK)
-	io.Writer.Write(w, data)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(data)
 }

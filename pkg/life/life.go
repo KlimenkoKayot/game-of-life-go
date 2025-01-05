@@ -3,14 +3,12 @@ package life
 import (
 	"fmt"
 	"math/rand"
-
-	"github.com/klimenkokayot/game-of-life-go/pkg/support"
 )
 
 type World struct {
 	Height int
 	Width  int
-	Cells  [][]bool
+	Cells  [][]int
 }
 
 // Определяет количество живых соседей у клетки
@@ -21,46 +19,46 @@ func (w *World) Neighbours(x, y int) (int, error) {
 	}
 
 	if x != 0 {
-		cnt += support.B2I(w.Cells[x-1][y])
+		cnt += w.Cells[x-1][y]
 		if y != 0 {
-			cnt += support.B2I(w.Cells[x-1][y-1])
+			cnt += w.Cells[x-1][y-1]
 		}
 		if y != w.Width-1 {
-			cnt += support.B2I(w.Cells[x-1][y+1])
+			cnt += w.Cells[x-1][y+1]
 		}
 	}
 	if x != w.Height-1 {
-		cnt += support.B2I(w.Cells[x+1][y])
+		cnt += w.Cells[x+1][y]
 		if y != 0 {
-			cnt += support.B2I(w.Cells[x+1][y-1])
+			cnt += w.Cells[x+1][y-1]
 		}
 		if y != w.Width-1 {
-			cnt += support.B2I(w.Cells[x+1][y+1])
+			cnt += w.Cells[x+1][y+1]
 		}
 	}
 	if y != 0 {
-		cnt += support.B2I(w.Cells[x][y-1])
+		cnt += w.Cells[x][y-1]
 	}
 	if y != w.Width-1 {
-		cnt += support.B2I(w.Cells[x][y+1])
+		cnt += w.Cells[x][y+1]
 	}
 
 	return cnt, nil
 }
 
 // Определяет состояние клетки в следующем состоянии
-func (w *World) Next(x, y int) (bool, error) {
+func (w *World) Next(x, y int) (int, error) {
 	n, err := w.Neighbours(x, y)
 	if err != nil {
-		return false, err
+		return 0, err
 	}
 
 	alive := w.Cells[x][y]
-	if alive && (n > 4 || n < 2) {
-		alive = false
+	if alive == 1 && (n > 4 || n < 2) {
+		alive = 0
 	}
-	if !alive && n == 3 {
-		alive = true
+	if alive == 0 && n == 3 {
+		alive = 1
 	}
 	return alive, nil
 }
@@ -77,21 +75,16 @@ func (w *World) NextState() {
 	}
 }
 
-// Меняет состояние клетки на True
-func (w *World) SetTrue(x, y int) error {
+// Инвертирует состояние клетки
+func (w *World) InvertCell(x, y int) error {
 	if err := w.CheckPosition(x, y); err != nil {
-		return nil
+		return err
 	}
-	w.Cells[x][y] = true
-	return nil
-}
-
-// Меняет состояние клетки на False
-func (w *World) SetFalse(x, y int) error {
-	if err := w.CheckPosition(x, y); err != nil {
-		return nil
+	if w.Cells[x][y] == 1 {
+		w.Cells[x][y] = 0
+	} else {
+		w.Cells[x][y] = 1
 	}
-	w.Cells[x][y] = false
 	return nil
 }
 
@@ -105,9 +98,9 @@ func (w *World) Seed(fill int) error {
 	}
 	for i := 0; i < w.Height; i++ {
 		for j := 0; j < w.Width; j++ {
-			w.Cells[i][j] = false
+			w.Cells[i][j] = 0
 			if rand.Intn(100+1) <= fill {
-				w.Cells[i][j] = true
+				w.Cells[i][j] = 1
 			}
 		}
 	}
@@ -119,9 +112,9 @@ func (w *World) Seed(fill int) error {
  * Индексация поля с 1
  */
 func NewWorld(height, width int) *World {
-	cells := make([][]bool, height)
+	cells := make([][]int, height)
 	for i := range cells {
-		cells[i] = make([]bool, width)
+		cells[i] = make([]int, width)
 	}
 	return &World{
 		Height: height,
@@ -145,7 +138,7 @@ func (w *World) String() string {
 	result := ""
 	for i := 0; i < w.Height; i++ {
 		for j := 0; j < w.Width; j++ {
-			if w.Cells[i][j] {
+			if w.Cells[i][j] == 1 {
 				result += trueSquare
 			} else {
 				result += falseSquare

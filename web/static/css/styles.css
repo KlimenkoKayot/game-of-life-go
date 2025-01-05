@@ -1,0 +1,17 @@
+#grid {
+  display: grid;
+  gap: 1px;
+  background-color: #ccc;
+}
+
+.cell {
+  width: 20px;
+  height: 20px;
+  background-color: white;
+  border: 1px solid #ccc;
+  cursor: pointer;
+}
+
+.alive {
+  background-color: black;
+}
