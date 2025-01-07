@@ -37,7 +37,14 @@ function toggleCell(row, col) {
 function nextGeneration() {
   fetch('/api/v1/next')
     .then(response => response.json())
-    .then(data => renderGrid(data));
+    .then(data => renderGrid(data)); 
+}
+
+// Рандомное состояние
+function seedState() {
+  fetch('/api/v1/seed?fill=30')
+    .then(response => response.json())
+    .then(data => renderGrid(data)); 
 }
 
 // Первоначальная загрузка
