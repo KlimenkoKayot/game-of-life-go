@@ -3,5 +3,5 @@ package main
 import "github.com/klimenkokayot/game-of-life-go/internal/application"
 
 func main() {
-	application.Run(10, 10)
+	application.Run(10, 15)
 }

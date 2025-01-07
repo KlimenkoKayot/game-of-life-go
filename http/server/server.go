@@ -24,6 +24,11 @@ func Run(height, width int) http.Handler {
 	mux.HandleFunc("/api/v1/toggle", ls.ToggleCell)
 	mux.HandleFunc("/api/v1/seed", ls.Seed)
 
+	/*
+	 * TODO сделать нормально
+	 */
+	mux.HandleFunc("/api/v1/size", ls.Size)
+
 	staticDir := filepath.Join(".", "web", "static")
 	fs := http.FileServer(http.Dir(staticDir))
 	mux.Handle("/static/", http.StripPrefix("/static/", fs))

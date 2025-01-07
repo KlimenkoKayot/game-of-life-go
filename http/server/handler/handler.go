@@ -56,7 +56,7 @@ func (ls *LifeState) ToggleCell(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.WriteHeader(http.StatusUnprocessableEntity)
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(fmt.Errorf("bad param row"))
+		json.NewEncoder(w).Encode(err.Error())
 		return
 	}
 
@@ -64,7 +64,7 @@ func (ls *LifeState) ToggleCell(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.WriteHeader(http.StatusUnprocessableEntity)
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(fmt.Errorf("bad param col"))
+		json.NewEncoder(w).Encode(err.Error())
 		return
 	}
 
@@ -75,7 +75,7 @@ func (ls *LifeState) ToggleCell(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.WriteHeader(http.StatusUnprocessableEntity)
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(fmt.Errorf("bad param col"))
+		json.NewEncoder(w).Encode(err.Error())
 		return
 	}
 
@@ -87,6 +87,19 @@ func (ls *LifeState) ToggleCell(w http.ResponseWriter, r *http.Request) {
 func (ls *LifeState) GetState(w http.ResponseWriter, r *http.Request) {
 	ls.Mutex.Lock()
 	data := ls.LifeService.World.Cells
+	ls.Mutex.Unlock()
+
+	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(data)
+}
+
+/*
+ * TODO сделать нормально
+ */
+func (ls *LifeState) Size(w http.ResponseWriter, r *http.Request) {
+	ls.Mutex.Lock()
+	data := []int{ls.LifeService.World.Width, ls.LifeService.World.Height}
 	ls.Mutex.Unlock()
 
 	w.WriteHeader(http.StatusOK)

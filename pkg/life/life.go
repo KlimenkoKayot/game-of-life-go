@@ -11,42 +11,54 @@ type World struct {
 	Cells  [][]int
 }
 
-// Определяет количество живых соседей у клетки
+/*
+ * Определяет количество живых соседей у клетки
+ * (на торе)
+ */
 func (w *World) Neighbours(x, y int) (int, error) {
 	cnt := 0
 	if err := w.CheckPosition(x, y); err != nil {
 		return 0, err
 	}
 
+	var (
+		xl, xr, yl, yr int
+	)
 	if x != 0 {
-		cnt += w.Cells[x-1][y]
-		if y != 0 {
-			cnt += w.Cells[x-1][y-1]
-		}
-		if y != w.Width-1 {
-			cnt += w.Cells[x-1][y+1]
-		}
+		xl = x - 1
+	} else {
+		xl = w.Height - 1
 	}
-	if x != w.Height-1 {
-		cnt += w.Cells[x+1][y]
-		if y != 0 {
-			cnt += w.Cells[x+1][y-1]
-		}
-		if y != w.Width-1 {
-			cnt += w.Cells[x+1][y+1]
-		}
+	if x == w.Height-1 {
+		xr = 0
+	} else {
+		xr = x + 1
 	}
 	if y != 0 {
-		cnt += w.Cells[x][y-1]
+		yl = y - 1
+	} else {
+		yl = w.Width - 1
 	}
-	if y != w.Width-1 {
-		cnt += w.Cells[x][y+1]
+	if y == w.Width-1 {
+		yr = 0
+	} else {
+		yr = y + 1
 	}
+	cnt += w.Cells[xl][y]
+	cnt += w.Cells[xl][yl]
+	cnt += w.Cells[xl][yr]
+	cnt += w.Cells[xr][y]
+	cnt += w.Cells[xr][yl]
+	cnt += w.Cells[xr][yr]
+	cnt += w.Cells[x][yl]
+	cnt += w.Cells[x][yr]
 
 	return cnt, nil
 }
 
-// Определяет состояние клетки в следующем состоянии
+/*
+ * Определяет состояние клетки в следующем состоянии
+ */
 func (w *World) Next(x, y int) (int, error) {
 	n, err := w.Neighbours(x, y)
 	if err != nil {
@@ -153,10 +165,10 @@ func (w *World) String() string {
 
 // Валидация координатов точки (норм или выходит за поле)
 func (w *World) CheckPosition(x, y int) error {
-	if x < 0 || x >= w.Width {
+	if x < 0 || x >= w.Height {
 		return fmt.Errorf("x must be: %d <= y < %d", 0, w.Width)
 	}
-	if y < 0 || y >= w.Height {
+	if y < 0 || y >= w.Width {
 		return fmt.Errorf("y must be: %d <= y < %d", 0, w.Height)
 	}
 	return nil

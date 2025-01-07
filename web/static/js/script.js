@@ -1,4 +1,9 @@
-const gridSize = 10;
+/*
+ * TODO сделать нормально
+ */
+var gridSizeCols = 0;
+var gridSizeRows = 0;
+
 const gridElement = document.getElementById('grid');
 
 // Загрузка сетки с сервера
@@ -8,10 +13,34 @@ function loadGrid() {
     .then(data => renderGrid(data));
 }
 
+/*
+ * TODO сделать нормально
+ */
+function gridSize() {
+  fetch('/api/v1/size')
+  .then(response => response.json())
+  .then(data => setGridSize(data));
+}
+
+/*
+ * TODO сделать нормально
+ */
+function setGridSize(data) {
+  data.forEach((val, i) => {
+    if (i == 0) {
+      gridSizeCols = val
+    } else {
+      gridSizeRows = val
+    }
+  })
+}
+
+
 // Отрисовка сетки
 function renderGrid(grid) {
   gridElement.innerHTML = '';
-  gridElement.style.gridTemplateColumns = `repeat(${gridSize}, 20px)`;
+  gridElement.style.gridTemplateColumns = `repeat(${gridSizeCols}, 20px)`;
+  gridElement.style.gridTemplateRows = `repeat(${gridSizeRows}, 20px)`;
 
   grid.forEach((row, i) => {
     row.forEach((cell, j) => {
@@ -48,4 +77,5 @@ function seedState() {
 }
 
 // Первоначальная загрузка
+gridSize();
 loadGrid();
