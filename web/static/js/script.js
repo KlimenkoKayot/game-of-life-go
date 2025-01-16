@@ -3,8 +3,14 @@
  */
 var gridSizeCols = 0;
 var gridSizeRows = 0;
+var autoGenerating = false;
 
 const gridElement = document.getElementById('grid');
+
+// спим
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
 
 // Загрузка сетки с сервера
 function loadGrid() {
@@ -69,9 +75,28 @@ function nextGeneration() {
     .then(data => renderGrid(data)); 
 }
 
+function toggleAutoGeneration() {
+  autoGenerating = !autoGenerating;
+  if (autoGenerating) {
+    autoGenerating();
+  }
+}
+
+async function autoGeneration() {
+  if (autoGenerating) {
+    for (;;) {
+      nextGeneration();
+      await sleep(1000);
+      if (!autoGenerating) {
+        break
+      }
+    }
+  }
+}
+
 // Рандомное состояние
 function seedState() {
-  fetch('/api/v1/seed?fill=30')
+  fetch('/api/v1/seed?fill=15')
     .then(response => response.json())
     .then(data => renderGrid(data)); 
 }
@@ -79,3 +104,4 @@ function seedState() {
 // Первоначальная загрузка
 gridSize();
 loadGrid();
+autoGenerating();
