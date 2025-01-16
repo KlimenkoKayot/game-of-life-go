@@ -15,3 +15,7 @@
 .alive {
   background-color: black;
 }
+
+.toggle-gen-button {
+  color: red;
+}

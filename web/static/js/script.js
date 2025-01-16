@@ -75,10 +75,15 @@ function nextGeneration() {
     .then(data => renderGrid(data)); 
 }
 
+const toggleAutoButton = document.querySelector('.toggle-gen-button');
+
 function toggleAutoGeneration() {
   autoGenerating = !autoGenerating;
   if (autoGenerating) {
-    autoGenerating();
+    toggleAutoButton.style.color = 'green';
+    autoGeneration();
+  } else {
+    toggleAutoButton.style.color = 'red';
   }
 }
 
@@ -104,4 +109,3 @@ function seedState() {
 // Первоначальная загрузка
 gridSize();
 loadGrid();
-autoGenerating();
