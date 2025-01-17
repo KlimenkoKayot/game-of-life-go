@@ -41,6 +41,35 @@ func (ls *LifeState) Seed(w http.ResponseWriter, r *http.Request) {
 	ls.GetState(w, r)
 }
 
+func (ls *LifeState) GetNumNeighbours(w http.ResponseWriter, r *http.Request) {
+	ls.Mutex.Lock()
+	data := ls.LifeService.World.NumNeighbours
+	ls.Mutex.Unlock()
+
+	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(data)
+}
+
+func (ls *LifeState) GetNearNumNeighbours(w http.ResponseWriter, r *http.Request) {
+	row, _ := strconv.Atoi(r.URL.Query().Get("row"))
+	col, _ := strconv.Atoi(r.URL.Query().Get("col"))
+
+	ls.Mutex.Lock()
+	data, err := ls.LifeService.World.GetNearNumNeighbours(row, col)
+	ls.Mutex.Unlock()
+
+	if err != nil {
+		w.WriteHeader(http.StatusUnprocessableEntity)
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(err.Error())
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(data)
+}
+
 // Меняет состояние на следующее, возвращает новое поле
 func (ls *LifeState) NextState(w http.ResponseWriter, r *http.Request) {
 	ls.Mutex.Lock()
@@ -79,8 +108,10 @@ func (ls *LifeState) ToggleCell(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// После переключения возвращаем JSON state
-	ls.GetState(w, r)
+	// После переключения возвращаем JSON state текущей клетки
+	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(fmt.Sprintf("%d", ls.LifeService.World.Cells[row][col]))
 }
 
 // JSON
@@ -99,7 +130,7 @@ func (ls *LifeState) GetState(w http.ResponseWriter, r *http.Request) {
  */
 func (ls *LifeState) Size(w http.ResponseWriter, r *http.Request) {
 	ls.Mutex.Lock()
-	data := []int{ls.LifeService.World.Width, ls.LifeService.World.Height}
+	data := []int{ls.LifeService.World.Height, ls.LifeService.World.Width}
 	ls.Mutex.Unlock()
 
 	w.WriteHeader(http.StatusOK)

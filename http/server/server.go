@@ -18,11 +18,13 @@ func Run(height, width int) http.Handler {
 		Mutex:       &sync.Mutex{},
 	}
 
-	mux.HandleFunc("/api/v1/index", ls.Index)
+	mux.HandleFunc("/game", ls.Index)
 	mux.HandleFunc("/api/v1/state", ls.GetState)
 	mux.HandleFunc("/api/v1/next", ls.NextState)
 	mux.HandleFunc("/api/v1/toggle", ls.ToggleCell)
 	mux.HandleFunc("/api/v1/seed", ls.Seed)
+	mux.HandleFunc("/api/v1/neighbours", ls.GetNumNeighbours)
+	mux.HandleFunc("/api/v1/near_neighbours", ls.GetNearNumNeighbours)
 
 	/*
 	 * TODO сделать нормально
